@@ -111,13 +111,13 @@ public class JGivenPluginTest extends
             .the_plugin_is_applied()
             .and().there_are_JGiven_tests()
             .and().the_jgiven_report_is_configured_by("reports {\n"
-                + "  html {\n"
-                + "    required = false\n"
-                + "  }\n"
-                + "  text {\n"
-                + "    required = true\n"
-                + "  }\n"
-                + "}\n")
+            + "  html {\n"
+            + "    required = false\n"
+            + "  }\n"
+            + "  text {\n"
+            + "    required = true\n"
+            + "  }\n"
+            + "}\n")
         ;
 
         when()
@@ -137,11 +137,11 @@ public class JGivenPluginTest extends
             .the_plugin_is_applied()
             .and().there_are_JGiven_tests()
             .and().the_jgiven_report_is_configured_by("reports {\n"
-                + "  html {\n"
-                + "    required = true\n"
-                + "    title = 'JGiven Gradle Plugin'\n"
-                + "  }\n"
-                + "}\n")
+            + "  html {\n"
+            + "    required = true\n"
+            + "    title = 'JGiven Gradle Plugin'\n"
+            + "  }\n"
+            + "}\n")
         ;
 
         when()
@@ -167,6 +167,27 @@ public class JGivenPluginTest extends
 
         then()
             .the_JGiven_reports_are_not_written_to("build/reports/jgiven/test/html");
+    }
+
+    @Test
+    //TODO: does that really work?
+    //TODO: and is this test necessary?
+    void gradle_plugin_takes_precedence_over_config_file() throws IOException {
+        given().a_configuration_file_with("jgiven.report.enabled=false\n")
+            .and().the_plugin_is_applied()
+            .and().the_jgiven_report_is_configured_by(""
+            + "reports {\n"
+            + "    text {\n"
+            + "        required=true\n"
+            + "    }\n"
+            + "}")
+            .and().there_are_JGiven_tests();
+
+        when().a_build().with().the_task("test")
+            .and().the_task("jgivenTestReport").is_successful();
+
+        then().the_JGiven_text_reports_are_written_to("build/reports/jgiven/test/text");
+
 
     }
 
@@ -180,6 +201,13 @@ public class JGivenPluginTest extends
         private void setup() {
             File actualBuildFile = new File(testProjectDir.file, "build.gradle");
             buildFile = Files.asCharSink(actualBuildFile, Charsets.UTF_8, FileWriteMode.APPEND);
+        }
+
+        Given a_configuration_file_with(String text) throws IOException {
+            File configurationFile = new File(testProjectDir.file, "jgiven.properties");
+            CharSink configurationCharSink = Files.asCharSink(configurationFile, Charsets.UTF_8, FileWriteMode.APPEND);
+            configurationCharSink.write(text);
+            return self();
         }
 
         Given the_plugin_is_applied() throws IOException {
